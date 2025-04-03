@@ -11,7 +11,7 @@ import { LungInfectionResults } from "@/components/lung-infection-results"
 import { Upload, AlertCircle } from "lucide-react"
 
 // API endpoint configuration
-const API_ENDPOINT = "http://localhost/images/Curie_v1/"
+const API_URL = "https://humath-curie-api.thankfulmoss-7950af75.westus2.azurecontainerapps.io/"
 const FETCH_TIMEOUT = 30000 // 30 seconds timeout
 
 // Define file types and their accepted MIME types
@@ -24,14 +24,14 @@ const FILE_TYPES = {
     icon: "image",
   },
   pdf: {
-    accept: { "application/pdf": [".pdf"] },
+    accept: { "application/pdf": [".docx"] },
     maxFiles: 1,
     label: "Medical History (PDF)",
     description: "Upload PDF document containing patient medical history",
     icon: "file-text",
   },
   ecg: {
-    accept: { "application/*": [".csv", ".json", ".dat"] },
+    accept: { "application/*": [".pdf"] },
     maxFiles: 1,
     label: "ECG Signals",
     description: "Upload ECG signal data for cardiac analysis",
@@ -53,21 +53,25 @@ interface UploadedFile {
 }
 
 interface LungInfectionData {
-  total_ratio: number
-  right_ratio: {
+  total_ratio?: number
+  right_ratio?: {
     lt: number
     rt: number
     rb: number
     lb: number
   }
-  left_ratio: {
+  left_ratio?: {
     lt: number
     rt: number
     rb: number
     lb: number
   }
-  label: string
-  confidence: number
+  label?: string
+  confidence?: number
+  pleth_status?: string
+  idsa_ats_patterns?: { [key: string]: string }
+  idsa_ats_score?: number
+  patient_age?: number
 }
 
 // Helper function to handle fetch with timeout
@@ -160,78 +164,325 @@ export default function CurieUploadInterface() {
     }
   }
 
-  // Handle file upload and processing
-  const handleProcessFiles = async () => {
-    const xrayFile = files.find((f) => f.type === "xray" && f.status === "idle")
-
-    if (!xrayFile) {
-      alert("Please upload an X-Ray image to process")
-      return
-    }
-
-    setIsProcessing(true)
-
+  const processXrayResponse = async (file: File) => {
     try {
-      // Update file to uploading status
-      setFiles((prev) => prev.map((f) => (f.id === xrayFile.id ? { ...f, status: "uploading" } : f)))
+      const formData = new FormData();
+      formData.append("image", file);
 
-      // Create FormData object
-      const formData = new FormData()
-      formData.append("image", xrayFile.file)
-
-      // Simple fetch request
-      const response = await fetch(API_ENDPOINT, {
+      const response = await fetch(`${API_URL}images/Curie_v1/`, {
         method: "POST",
-        body: formData
-      })
+        body: formData,
+      });
 
-      // Set file as processed
-      setFiles((prev) => prev.map((f) => (f.id === xrayFile.id ? { ...f, progress: 100, status: "complete" } : f)))
+      const rawResponse = await response.json();
+      const analysisData = JSON.parse(rawResponse);
 
-      // Get and process results
-      const rawResponse = await response.json()
-      console.log('Raw response:', rawResponse)
-      
-      // Parse the JSON string response
-      const analysisData = JSON.parse(rawResponse)
-      console.log('Parsed data:', analysisData)
-      
-      // Transform and validate the data
-      const processedData = {
-        total_ratio: Number(analysisData.total_ratio || 0),
+      return {
+        total_ratio: analysisData.label === "SANO" || analysisData.label === "OTROS" ? 0 : Number(analysisData.total_ratio) || 0,
         right_ratio: {
-          lt: Number(analysisData.right_ratio?.lt || 0),
-          rt: Number(analysisData.right_ratio?.rt || 0),
-          rb: Number(analysisData.right_ratio?.rb || 0),
-          lb: Number(analysisData.right_ratio?.lb || 0)
+          lt: analysisData.label === "SANO" || analysisData.label === "OTROS" ? 0 : Number(analysisData.right_ratio?.lt) || 0,
+          rt: analysisData.label === "SANO" || analysisData.label === "OTROS" ? 0 : Number(analysisData.right_ratio?.rt) || 0,
+          rb: analysisData.label === "SANO" || analysisData.label === "OTROS" ? 0 : Number(analysisData.right_ratio?.rb) || 0,
+          lb: analysisData.label === "SANO" || analysisData.label === "OTROS" ? 0 : Number(analysisData.right_ratio?.lb) || 0,
         },
         left_ratio: {
-          lt: Number(analysisData.left_ratio?.lt || 0),
-          rt: Number(analysisData.left_ratio?.rt || 0),
-          rb: Number(analysisData.left_ratio?.rb || 0),
-          lb: Number(analysisData.left_ratio?.lb || 0)
+          lt: analysisData.label === "SANO" || analysisData.label === "OTROS" ? 0 : Number(analysisData.left_ratio?.lt) || 0,
+          rt: analysisData.label === "SANO" || analysisData.label === "OTROS" ? 0 : Number(analysisData.left_ratio?.rt) || 0,
+          rb: analysisData.label === "SANO" || analysisData.label === "OTROS" ? 0 : Number(analysisData.left_ratio?.rb) || 0,
+          lb: analysisData.label === "SANO" || analysisData.label === "OTROS" ? 0 : Number(analysisData.left_ratio?.lb) || 0,
         },
         label: analysisData.label || "OTROS",
-        confidence: Number(analysisData.confidence || 0)
+        confidence: (Number(analysisData.confidence) * 100) || 0,
+      };
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  };
+
+  const processMedicalHistory = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`${API_URL}nlp/upload_docx`, {
+        method: "POST",
+        body: formData,
+        redirect: "manual",
+      });
+
+      const rawResponse = await response.text()
+      const historyData = JSON.parse(rawResponse);
+
+      let parsedPatterns = {};
+      if (typeof historyData["IDSA ATS patterns"] === "string") {
+        try {
+          parsedPatterns = JSON.parse(
+            historyData["IDSA ATS patterns"].replace(/'/g, '"')
+          );
+        } catch (error) {
+          console.error(error);
+        }
       }
 
-      console.log('Processed data:', processedData)
+      return {
+        patient_age: Number(historyData["Patient age"] || 0),
+        idsa_ats_score: Number(historyData["IDSA ATS score"] || 0),
+        idsa_ats_patterns: parsedPatterns,
+      };
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  };
 
-      setLungInfectionData(processedData)
-      setShowResults(true)
+  const processEcgResponse = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("fs", "250");
+      formData.append("pdf_file", file);
 
-    } catch (error: any) {
-      console.error("Error processing file:", error)
+      const response = await fetch(`${API_URL}biosignals/deteccion_arritmias_pacientes/`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const rawResponse = await response.json();
+      const ecgData = JSON.parse(rawResponse);
+
+      return {
+        pleth_status: ecgData["PERSONA_0"]?.["PLETH"] || undefined,
+      };
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  };
+
+  const handleProcessFiles = async () => {
+    const filesToProcess = files.filter(
+      (f) => ["xray", "pdf", "ecg"].includes(f.type) && f.status === "idle"
+    );
+
+    if (filesToProcess.length === 0) {
+      alert("Please upload at least one file to process.");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    let responses = {
+      total_ratio: 0,
+      right_ratio: { lt: 0, rt: 0, rb: 0, lb: 0 },
+      left_ratio: { lt: 0, rt: 0, rb: 0, lb: 0 },
+      label: "OTROS",
+      confidence: 0,
+      patient_age: 0,
+      idsa_ats_score: 0,
+      idsa_ats_patterns: {},
+      pleth_status: undefined,
+    };
+
+    try {
       setFiles((prev) =>
         prev.map((f) =>
-          f.id === xrayFile.id ? { ...f, status: "error", error: "Error uploading file" } : f
+          filesToProcess.some((file) => file.id === f.id)
+            ? { ...f, status: "uploading" }
+            : f
         )
-      )
-      alert("Error uploading file")
+      );
+
+      await Promise.all(
+        filesToProcess.map(async (file) => {
+          let result = null;
+
+          if (file.type === "xray") {
+            result = await processXrayResponse(file.file);
+          } else if (file.type === "pdf") {
+            result = await processMedicalHistory(file.file);
+          } else if (file.type === "ecg") {
+            result = await processEcgResponse(file.file);
+          }
+
+          Object.assign(responses, result);
+
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === file.id ? { ...f, progress: 100, status: "complete" } : f
+            )
+          );
+        })
+      );
+
+      console.log("Final processed data:", responses);
+
+      setLungInfectionData(responses as LungInfectionData);
+      setShowResults(true);
+    } catch (error) {
+      console.error("Error processing files:", error);
+
+      setFiles((prev) =>
+        prev.map((f) =>
+          filesToProcess.some((file) => file.id === f.id)
+            ? { ...f, status: "error", error: "Error uploading file" }
+            : f
+        )
+      );
+
+      alert("Error uploading file");
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
+
+  // const handleProcessFiles3 = async () => {
+  //   const filesToProcess = files.filter((f) =>
+  //     ["xray", "pdf", "ecg"].includes(f.type) && f.status === "idle"
+  //   );
+
+  //   if (filesToProcess.length === 0) {
+  //     alert("Please upload at least one file to process.");
+  //     return;
+  //   }
+
+  //   setIsProcessing(true)
+
+  //   try {
+  //     // Update file to uploading status
+  //     setFiles((prev) => prev.map((f) => (f.id === xrayFile.id ? { ...f, status: "uploading" } : f)))
+
+  //     // Create FormData object
+  //     const formData = new FormData()
+  //     formData.append("image", xrayFile.file)
+
+  //     // Simple fetch request
+  //     const response = await fetch(`${API_URL}images/Curie_v1/`, {
+  //       method: "POST",
+  //       body: formData,
+  //       redirect: 'manual',
+  //     })
+
+  //     // Set file as processed
+  //     setFiles((prev) => prev.map((f) => (f.id === xrayFile.id ? { ...f, progress: 100, status: "complete" } : f)))
+
+  //     // Get and process results
+  //     const rawResponse = await response.json()
+  //     console.log('Raw response:', rawResponse)
+
+  //     // Parse the JSON string response
+  //     const analysisData = JSON.parse(rawResponse)
+  //     console.log('Parsed data:', analysisData)
+
+  //     // Transform and validate the data
+  //     const processedData = {
+  //       total_ratio: Number(analysisData.total_ratio || 0),
+  //       right_ratio: {
+  //         lt: Number(analysisData.right_ratio?.lt || 0),
+  //         rt: Number(analysisData.right_ratio?.rt || 0),
+  //         rb: Number(analysisData.right_ratio?.rb || 0),
+  //         lb: Number(analysisData.right_ratio?.lb || 0)
+  //       },
+  //       left_ratio: {
+  //         lt: Number(analysisData.left_ratio?.lt || 0),
+  //         rt: Number(analysisData.left_ratio?.rt || 0),
+  //         rb: Number(analysisData.left_ratio?.rb || 0),
+  //         lb: Number(analysisData.left_ratio?.lb || 0)
+  //       },
+  //       label: analysisData.label || "OTROS",
+  //       confidence: Number((analysisData.confidence * 100) || 0)
+  //     }
+
+  //     console.log('Processed data:', processedData)
+
+  //     setLungInfectionData(processedData)
+  //     setShowResults(true)
+
+  //   } catch (error: any) {
+  //     console.error("Error processing file:", error)
+  //     setFiles((prev) =>
+  //       prev.map((f) =>
+  //         f.id === xrayFile.id ? { ...f, status: "error", error: "Error uploading file" } : f
+  //       )
+  //     )
+  //     alert("Error uploading file")
+  //   } finally {
+  //     setIsProcessing(false)
+  //   }
+  // }
+
+  // // Handle file upload and processing
+  // const handleProcessFiles2 = async () => {
+  //   const xrayFile = files.find((f) => f.type === "xray" && f.status === "idle")
+
+  //   if (!xrayFile) {
+  //     alert("Please upload an X-Ray image to process")
+  //     return
+  //   }
+
+  //   setIsProcessing(true)
+
+  //   try {
+  //     // Update file to uploading status
+  //     setFiles((prev) => prev.map((f) => (f.id === xrayFile.id ? { ...f, status: "uploading" } : f)))
+
+  //     // Create FormData object
+  //     const formData = new FormData()
+  //     formData.append("image", xrayFile.file)
+
+  //     // Simple fetch request
+  //     const response = await fetch(`${API_URL}images/Curie_v1/`, {
+  //       method: "POST",
+  //       body: formData,
+  //       redirect: 'manual',
+  //     })
+
+  //     // Set file as processed
+  //     setFiles((prev) => prev.map((f) => (f.id === xrayFile.id ? { ...f, progress: 100, status: "complete" } : f)))
+
+  //     // Get and process results
+  //     const rawResponse = await response.json()
+  //     console.log('Raw response:', rawResponse)
+
+  //     // Parse the JSON string response
+  //     const analysisData = JSON.parse(rawResponse)
+  //     console.log('Parsed data:', analysisData)
+
+  //     // Transform and validate the data
+  //     const processedData = {
+  //       total_ratio: Number(analysisData.total_ratio || 0),
+  //       right_ratio: {
+  //         lt: Number(analysisData.right_ratio?.lt || 0),
+  //         rt: Number(analysisData.right_ratio?.rt || 0),
+  //         rb: Number(analysisData.right_ratio?.rb || 0),
+  //         lb: Number(analysisData.right_ratio?.lb || 0)
+  //       },
+  //       left_ratio: {
+  //         lt: Number(analysisData.left_ratio?.lt || 0),
+  //         rt: Number(analysisData.left_ratio?.rt || 0),
+  //         rb: Number(analysisData.left_ratio?.rb || 0),
+  //         lb: Number(analysisData.left_ratio?.lb || 0)
+  //       },
+  //       label: analysisData.label || "OTROS",
+  //       confidence: Number((analysisData.confidence * 100) || 0)
+  //     }
+
+  //     console.log('Processed data:', processedData)
+
+  //     setLungInfectionData(processedData)
+  //     setShowResults(true)
+
+  //   } catch (error: any) {
+  //     console.error("Error processing file:", error)
+  //     setFiles((prev) =>
+  //       prev.map((f) =>
+  //         f.id === xrayFile.id ? { ...f, status: "error", error: "Error uploading file" } : f
+  //       )
+  //     )
+  //     alert("Error uploading file")
+  //   } finally {
+  //     setIsProcessing(false)
+  //   }
+  // }
 
   const handleRemoveFile = (fileId: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== fileId))
@@ -289,11 +540,10 @@ export default function CurieUploadInterface() {
                 <TabsContent key={type} value={type} className="space-y-4">
                   <div
                     {...getRootProps()}
-                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                      isDragActive
-                        ? "border-primary bg-primary/5"
-                        : "border-muted-foreground/20 hover:border-primary/50"
-                    }`}
+                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragActive
+                      ? "border-primary bg-primary/5"
+                      : "border-muted-foreground/20 hover:border-primary/50"
+                      }`}
                   >
                     <input {...getInputProps()} />
                     <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -345,7 +595,7 @@ export default function CurieUploadInterface() {
               </Button>
               <Button
                 onClick={handleProcessFiles}
-                disabled={!files.some((f) => f.type === "xray" && f.status === "idle") || isProcessing}
+                disabled={!files.some((f) => f.status === "idle") || isProcessing}
               >
                 {isProcessing ? "Processing..." : "Process Files"}
               </Button>
