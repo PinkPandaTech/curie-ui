@@ -92,7 +92,8 @@ const fetchWithTimeout = async (url: string, options: RequestInit, timeout: numb
   }
 }
 
-export default function CurieUploadInterface() {
+export default function CurieUploadInterface({ status }: { status: Record<string, string> }) {
+  const allServicesActive = Object.values(status).every(s => s === "Activo");
   const [activeTab, setActiveTab] = useState<FileType>("xray")
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
@@ -335,155 +336,6 @@ export default function CurieUploadInterface() {
     }
   };
 
-  // const handleProcessFiles3 = async () => {
-  //   const filesToProcess = files.filter((f) =>
-  //     ["xray", "pdf", "ecg"].includes(f.type) && f.status === "idle"
-  //   );
-
-  //   if (filesToProcess.length === 0) {
-  //     alert("Please upload at least one file to process.");
-  //     return;
-  //   }
-
-  //   setIsProcessing(true)
-
-  //   try {
-  //     // Update file to uploading status
-  //     setFiles((prev) => prev.map((f) => (f.id === xrayFile.id ? { ...f, status: "uploading" } : f)))
-
-  //     // Create FormData object
-  //     const formData = new FormData()
-  //     formData.append("image", xrayFile.file)
-
-  //     // Simple fetch request
-  //     const response = await fetch(`${API_URL}images/Curie_v1/`, {
-  //       method: "POST",
-  //       body: formData,
-  //       redirect: 'manual',
-  //     })
-
-  //     // Set file as processed
-  //     setFiles((prev) => prev.map((f) => (f.id === xrayFile.id ? { ...f, progress: 100, status: "complete" } : f)))
-
-  //     // Get and process results
-  //     const rawResponse = await response.json()
-  //     console.log('Raw response:', rawResponse)
-
-  //     // Parse the JSON string response
-  //     const analysisData = JSON.parse(rawResponse)
-  //     console.log('Parsed data:', analysisData)
-
-  //     // Transform and validate the data
-  //     const processedData = {
-  //       total_ratio: Number(analysisData.total_ratio || 0),
-  //       right_ratio: {
-  //         lt: Number(analysisData.right_ratio?.lt || 0),
-  //         rt: Number(analysisData.right_ratio?.rt || 0),
-  //         rb: Number(analysisData.right_ratio?.rb || 0),
-  //         lb: Number(analysisData.right_ratio?.lb || 0)
-  //       },
-  //       left_ratio: {
-  //         lt: Number(analysisData.left_ratio?.lt || 0),
-  //         rt: Number(analysisData.left_ratio?.rt || 0),
-  //         rb: Number(analysisData.left_ratio?.rb || 0),
-  //         lb: Number(analysisData.left_ratio?.lb || 0)
-  //       },
-  //       label: analysisData.label || "OTROS",
-  //       confidence: Number((analysisData.confidence * 100) || 0)
-  //     }
-
-  //     console.log('Processed data:', processedData)
-
-  //     setLungInfectionData(processedData)
-  //     setShowResults(true)
-
-  //   } catch (error: any) {
-  //     console.error("Error processing file:", error)
-  //     setFiles((prev) =>
-  //       prev.map((f) =>
-  //         f.id === xrayFile.id ? { ...f, status: "error", error: "Error uploading file" } : f
-  //       )
-  //     )
-  //     alert("Error uploading file")
-  //   } finally {
-  //     setIsProcessing(false)
-  //   }
-  // }
-
-  // // Handle file upload and processing
-  // const handleProcessFiles2 = async () => {
-  //   const xrayFile = files.find((f) => f.type === "xray" && f.status === "idle")
-
-  //   if (!xrayFile) {
-  //     alert("Please upload an X-Ray image to process")
-  //     return
-  //   }
-
-  //   setIsProcessing(true)
-
-  //   try {
-  //     // Update file to uploading status
-  //     setFiles((prev) => prev.map((f) => (f.id === xrayFile.id ? { ...f, status: "uploading" } : f)))
-
-  //     // Create FormData object
-  //     const formData = new FormData()
-  //     formData.append("image", xrayFile.file)
-
-  //     // Simple fetch request
-  //     const response = await fetch(`${API_URL}images/Curie_v1/`, {
-  //       method: "POST",
-  //       body: formData,
-  //       redirect: 'manual',
-  //     })
-
-  //     // Set file as processed
-  //     setFiles((prev) => prev.map((f) => (f.id === xrayFile.id ? { ...f, progress: 100, status: "complete" } : f)))
-
-  //     // Get and process results
-  //     const rawResponse = await response.json()
-  //     console.log('Raw response:', rawResponse)
-
-  //     // Parse the JSON string response
-  //     const analysisData = JSON.parse(rawResponse)
-  //     console.log('Parsed data:', analysisData)
-
-  //     // Transform and validate the data
-  //     const processedData = {
-  //       total_ratio: Number(analysisData.total_ratio || 0),
-  //       right_ratio: {
-  //         lt: Number(analysisData.right_ratio?.lt || 0),
-  //         rt: Number(analysisData.right_ratio?.rt || 0),
-  //         rb: Number(analysisData.right_ratio?.rb || 0),
-  //         lb: Number(analysisData.right_ratio?.lb || 0)
-  //       },
-  //       left_ratio: {
-  //         lt: Number(analysisData.left_ratio?.lt || 0),
-  //         rt: Number(analysisData.left_ratio?.rt || 0),
-  //         rb: Number(analysisData.left_ratio?.rb || 0),
-  //         lb: Number(analysisData.left_ratio?.lb || 0)
-  //       },
-  //       label: analysisData.label || "OTROS",
-  //       confidence: Number((analysisData.confidence * 100) || 0)
-  //     }
-
-  //     console.log('Processed data:', processedData)
-
-  //     setLungInfectionData(processedData)
-  //     setShowResults(true)
-
-  //   } catch (error: any) {
-  //     console.error("Error processing file:", error)
-  //     setFiles((prev) =>
-  //       prev.map((f) =>
-  //         f.id === xrayFile.id ? { ...f, status: "error", error: "Error uploading file" } : f
-  //       )
-  //     )
-  //     alert("Error uploading file")
-  //   } finally {
-  //     setIsProcessing(false)
-  //   }
-  // }
-
   const handleRemoveFile = (fileId: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== fileId))
 
@@ -595,7 +447,9 @@ export default function CurieUploadInterface() {
               </Button>
               <Button
                 onClick={handleProcessFiles}
-                disabled={!files.some((f) => f.status === "idle") || isProcessing}
+                disabled={
+                  !files.some((f) => f.status === "idle") || isProcessing || !allServicesActive
+                }
               >
                 {isProcessing ? "Processing..." : "Process Files"}
               </Button>
