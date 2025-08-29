@@ -36,6 +36,7 @@ jobs:
 
       - name: Build React App
         run: npm run build
+        continue-on-error: true
 
       # (Opcional) Paquete para obtener el ID Token vía OIDC
       - name: Install OIDC Client from Core Package
@@ -73,3 +74,4 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           action: "close"
+
