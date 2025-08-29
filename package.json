@@ -2,6 +2,7 @@
   "name": "curie-ui",
   "version": "0.1.0",
   "private": true,
+  "proxy": "https://humath-curie-api.thankfulmoss-7950af75.westus2.azurecontainerapps.io",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -14,8 +15,9 @@
     "@radix-ui/react-tabs": "^1.1.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.6.3",
     "lucide-react": "^0.479.0",
-    "next": "^15.2.2",
+    "next": "^15.2.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.8",
