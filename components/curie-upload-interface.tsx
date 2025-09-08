@@ -202,48 +202,24 @@ export default function CurieUploadInterface({
       const rawResponse = await response.json();
       const analysisData = JSON.parse(rawResponse);
 
-      console.log(rawResponse);
+      console.log("Datos desde RawResponse:", rawResponse);
+      console.log("Datos desde analysisData:", analysisData);
+      console.log("first", analysisData.right_ratio.rb);
 
+      // Los datos vienen directamente de la API y debemos mostrarlos tal cual
       return {
-        total_ratio:
-          analysisData.label === "SANO" || analysisData.label === "OTROS"
-            ? 0
-            : Number(analysisData.total_ratio) || 0,
+        total_ratio: Number(analysisData.total_ratio) || 0,
         right_ratio: {
-          lt:
-            analysisData.label === "SANO" || analysisData.label === "OTROS"
-              ? 0
-              : Number(analysisData.right_ratio?.lt) || 0,
-          rt:
-            analysisData.label === "SANO" || analysisData.label === "OTROS"
-              ? 0
-              : Number(analysisData.right_ratio?.rt) || 0,
-          rb:
-            analysisData.label === "SANO" || analysisData.label === "OTROS"
-              ? 0
-              : Number(analysisData.right_ratio?.rb) || 0,
-          lb:
-            analysisData.label === "SANO" || analysisData.label === "OTROS"
-              ? 0
-              : Number(analysisData.right_ratio?.lb) || 0,
+          lt: Number(analysisData.right_ratio?.lt) || 0,
+          rt: Number(analysisData.right_ratio?.rt) || 0,
+          rb: Number(analysisData.right_ratio?.rb) || 0,
+          lb: Number(analysisData.right_ratio?.lb) || 0,
         },
         left_ratio: {
-          lt:
-            analysisData.label === "SANO" || analysisData.label === "OTROS"
-              ? 0
-              : Number(analysisData.left_ratio?.lt) || 0,
-          rt:
-            analysisData.label === "SANO" || analysisData.label === "OTROS"
-              ? 0
-              : Number(analysisData.left_ratio?.rt) || 0,
-          rb:
-            analysisData.label === "SANO" || analysisData.label === "OTROS"
-              ? 0
-              : Number(analysisData.left_ratio?.rb) || 0,
-          lb:
-            analysisData.label === "SANO" || analysisData.label === "OTROS"
-              ? 0
-              : Number(analysisData.left_ratio?.lb) || 0,
+          lt: Number(analysisData.left_ratio?.lt) || 0,
+          rt: Number(analysisData.left_ratio?.rt) || 0,
+          rb: Number(analysisData.left_ratio?.rb) || 0,
+          lb: Number(analysisData.left_ratio?.lb) || 0,
         },
         label: analysisData.label || "OTROS",
         confidence: Number(analysisData.confidence) * 100 || 0,
