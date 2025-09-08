@@ -10,8 +10,12 @@ import { FileUploadStatus } from "@/components/file-upload-status"
 import { LungInfectionResults } from "@/components/lung-infection-results"
 import { Upload, AlertCircle } from "lucide-react"
 
-// API endpoint configuration
-const API_URL = "https://humath-curie-api.thankfulmoss-7950af75.westus2.azurecontainerapps.io/"
+// API endpoints configuration
+const API_ENDPOINTS = {
+    IMAGES: "https://capp-imagescurie-dev-001.calmgrass-38ffeef2.eastus2.azurecontainerapps.io",
+    NLP: "https://capp-nlpcurie-dev-001.calmgrass-38ffeef2.eastus2.azurecontainerapps.io",
+    BIOSIGNALS: "https://capp-biosignalscurie-dev-001.calmgrass-38ffeef2.eastus2.azurecontainerapps.io"
+};
 const FETCH_TIMEOUT = 30000 // 30 seconds timeout
 
 // Define file types and their accepted MIME types
@@ -170,7 +174,7 @@ export default function CurieUploadInterface({ status }: { status: Record<string
       const formData = new FormData();
       formData.append("image", file);
 
-      const response = await fetch(`${API_URL}images/Curie_v1/`, {
+      const response = await fetch(`${API_ENDPOINTS.IMAGES}/images/Curie_v1/`, {
         method: "POST",
         body: formData,
       });
@@ -206,7 +210,7 @@ export default function CurieUploadInterface({ status }: { status: Record<string
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`${API_URL}nlp/upload_docx`, {
+      const response = await fetch(`${API_ENDPOINTS.NLP}/nlp/upload_docx`, {
         method: "POST",
         body: formData,
         redirect: "manual",
@@ -243,7 +247,7 @@ export default function CurieUploadInterface({ status }: { status: Record<string
       formData.append("fs", "250");
       formData.append("pdf_file", file);
 
-      const response = await fetch(`${API_URL}biosignals/deteccion_arritmias_pacientes/`, {
+      const response = await fetch(`${API_ENDPOINTS.BIOSIGNALS}/biosignals/deteccion_arritmias_pacientes/`, {
         method: "POST",
         body: formData,
       });
