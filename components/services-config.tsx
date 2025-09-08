@@ -7,7 +7,7 @@ const API_ENDPOINTS = {
 
 export const services = [
     { name: 'XRay', url: `${API_ENDPOINTS.IMAGES}/images` },
-    { name: 'Medical History', url: `${API_ENDPOINTS.NLP}/nlp` },
-    { name: 'ECG', url: `${API_ENDPOINTS.BIOSIGNALS}/biosignals` }
+    { name: 'Medical History', url: `${API_ENDPOINTS.NLP}/nlp/` },
+    { name: 'ECG', url: `${API_ENDPOINTS.BIOSIGNALS}/biosignals/` }
 ];
 console.log(services)
