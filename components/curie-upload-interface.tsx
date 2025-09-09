@@ -16,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileUploadStatus } from "@/components/file-upload-status";
 import { LungInfectionResults } from "@/components/lung-infection-results";
 import { Upload, AlertCircle } from "lucide-react";
+import JSZip from 'jszip';
 
 // API endpoints configuration
 const API_ENDPOINTS = {
@@ -85,6 +86,7 @@ interface LungInfectionData {
   idsa_ats_patterns?: { [key: string]: string };
   idsa_ats_score?: number;
   patient_age?: number;
+  processedImageUrl?: string; // URL de la imagen procesada
 }
 
 // Helper function to handle fetch with timeout
@@ -194,19 +196,48 @@ export default function CurieUploadInterface({
       const formData = new FormData();
       formData.append("image", file);
 
-      const response = await fetch(`${API_ENDPOINTS.IMAGES}/images/Curie_v1/`, {
+      // Llamada al primer endpoint para obtener los datos de análisis
+      const analysisResponse = await fetch(`${API_ENDPOINTS.IMAGES}/images/Curie_v1/`, {
         method: "POST",
         body: formData,
       });
 
-      const rawResponse = await response.json();
+      const rawResponse = await analysisResponse.json();
       const analysisData = JSON.parse(rawResponse);
 
-      console.log("Datos desde RawResponse:", rawResponse);
-      console.log("Datos desde analysisData:", analysisData);
-      console.log("first", analysisData.right_ratio.rb);
+      // Llamada al segundo endpoint para obtener la imagen procesada
+      const imageFormData = new FormData();
+      imageFormData.append("image", file);
 
-      // Los datos vienen directamente de la API y debemos mostrarlos tal cual
+      // Realizamos la llamada para procesar la imagen
+      const imageResponse = await fetch(`${API_ENDPOINTS.IMAGES}/images/Curie_file/`, {
+        method: "POST",
+        body: imageFormData,
+      });
+
+      // Obtenemos el blob del archivo ZIP
+      const zipBlob = await imageResponse.blob();
+      
+      // Usamos JSZip para extraer la imagen del ZIP
+      const zip = new JSZip();
+      const zipContent = await zip.loadAsync(zipBlob);
+      
+      // Buscamos el archivo PNG dentro del ZIP
+      const pngFile = Object.values(zipContent.files).find(file => 
+        file.name.toLowerCase().endsWith('.png')
+      );
+
+      if (!pngFile) {
+        throw new Error('No se encontró ninguna imagen PNG en el archivo ZIP');
+      }
+
+      // Extraemos la imagen como blob
+      const imageBlob = await pngFile.async('blob');
+      
+      // Creamos una URL temporal para el blob de la imagen
+      const processedImageUrl = URL.createObjectURL(imageBlob);
+
+      // Retornamos los datos del análisis junto con la URL de la imagen procesada
       return {
         total_ratio: Number(analysisData.total_ratio) || 0,
         right_ratio: {
@@ -223,6 +254,7 @@ export default function CurieUploadInterface({
         },
         label: analysisData.label || "OTROS",
         confidence: Number(analysisData.confidence) * 100 || 0,
+        processedImageUrl: processedImageUrl, // Añadimos la URL de la imagen procesada
       };
     } catch (error) {
       console.error(error);
@@ -386,7 +418,12 @@ export default function CurieUploadInterface({
   };
 
   const handleBackToUpload = () => {
+    // Limpiamos las URLs de blob si existen
+    if (lungInfectionData?.processedImageUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(lungInfectionData.processedImageUrl);
+    }
     setShowResults(false);
+    setLungInfectionData(null);
   };
 
   // Count files by type and status
