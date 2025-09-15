@@ -40,8 +40,8 @@ const FILE_TYPES = {
   pdf: {
     accept: { "application/pdf": [".docx"] },
     maxFiles: 1,
-    label: "Medical History (PDF)",
-    description: "Upload PDF document containing patient medical history",
+    label: "Medical History (PDF / .DOCX)",
+    description: "Upload PDF / .DOCX document containing patient medical history",
     icon: "file-text",
   },
   ecg: {
@@ -116,7 +116,7 @@ export default function CurieUploadInterface({
 }: {
   status: Record<string, string>;
 }) {
-  const allServicesActive = Object.values(status).every((s) => s === "Activo");
+  const allServicesActive = Object.values(status).every((s) => s === "Active");
   const [activeTab, setActiveTab] = useState<FileType>("xray");
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -336,7 +336,7 @@ export default function CurieUploadInterface({
 
     setIsProcessing(true);
 
-    let responses = {
+    const responses = {
       total_ratio: 0,
       right_ratio: { lt: 0, rt: 0, rb: 0, lb: 0 },
       left_ratio: { lt: 0, rt: 0, rb: 0, lb: 0 },

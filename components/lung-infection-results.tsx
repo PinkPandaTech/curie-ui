@@ -8,6 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle, ImageOff } from "lucide-react";
 import Image from "next/image";
+import { div } from "framer-motion/client";
 
 interface LungInfectionData {
   total_ratio?: number;
@@ -58,30 +59,30 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-xl">Lung Infection Analysis</CardTitle>
+            <CardTitle className="text-2xl">Lung Infection Analysis</CardTitle>
             <CardDescription>AI-powered X-Ray analysis results</CardDescription>
           </div>
           <Badge
             variant={isHealthy ? "outline" : "destructive"}
             className={
               isHealthy
-                ? "bg-green-500/10 text-green-500 border-green-500/20"
-                : ""
+                ? "bg-green-500/10 text-green-500 border-green-500/20 text-base"
+                : "text-base "
             }
           >
             {isHealthy ? (
               <>
-                <CheckCircle className="h-3 w-3 mr-1" />
+                <CheckCircle className="h-5 w-5 mr-1" />
                 Healthy
               </>
             ) : isPneumonia ? (
               <>
-                <AlertCircle className="h-3 w-3 mr-1" />
+                <AlertCircle className="h-5 w-5 mr-1" />
                 Pneumonia
               </>
             ) : (
               <>
-                <AlertCircle className="h-3 w-3 mr-1" />
+                <AlertCircle className="h-5 w-5 mr-1" />
                 Other Condition
               </>
             )}
@@ -90,13 +91,18 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Parte de izquierda de las "barritas" */}
           <div>
-            <h3 className="text-sm font-medium mb-2">Overall Analysis</h3>
+            <h3 className="text-lg text-center font-medium mb-2">
+              Overall Analysis
+            </h3>
             <div className="space-y-4">
+              {/* "barritas de porcentaje" */}
               <div>
-                <h4 className="text-xs text-muted-foreground mb-1">
+                <h4 className="text-sm text-muted-foreground mb-1">
                   Total Infection Ratio
                 </h4>
+                {/* Barra roja */}
                 <div className="w-full bg-muted rounded-full h-4">
                   <div
                     className={`h-4 rounded-full ${
@@ -113,24 +119,25 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                   {total_ratio}% overall infection detected
                 </p>
               </div>
-
+              {/*  */}
               <div>
-                <h4 className="text-xs text-muted-foreground mb-1">
+                <h4 className="text-sm text-muted-foreground mb-1">
                   Confidence Score
                 </h4>
-                <div className="w-full bg-muted rounded-full h-2.5">
+                {/* barra Azul */}
+                <div className="w-full bg-muted rounded-full h-4">
                   <div
-                    className="bg-primary h-2.5 rounded-full"
+                    className="bg-primary h-4 rounded-full"
                     style={{ width: `${confidence}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {(confidence || 0).toFixed(1)}% confidence in analysis
                 </p>
               </div>
-
+              {/* Diagnostico */}
               <div>
-                <h4 className="text-xs text-muted-foreground mb-1">
+                <h4 className="text-sm text-muted-foreground mb-1">
                   Diagnosis
                 </h4>
                 <div
@@ -150,10 +157,10 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                       : "Other Condition"}
                   </p>
                 </div>
-
+                {/* Diagnostico ECG */}
                 {pleth_status !== undefined && pleth_status !== null && (
                   <>
-                    <h4 className="text-xs text-muted-foreground mb-1">
+                    <h4 className="text-sm text-muted-foreground mb-1">
                       ECG Diagnosis
                     </h4>
                     <div
@@ -177,13 +184,14 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                   </>
                 )}
 
+                {/* Información del paciente */}
                 {patient_age !== undefined && patient_age > 0 && (
                   <div>
-                    <h4 className="text-xs text-muted-foreground mb-1">
+                    <h4 className="text-sm text-muted-foreground mb-1">
                       Patient Information
                     </h4>
 
-                    <div className="p-3 rounded-md text-sm bg-blue-500/10">
+                    <div className="p-3 rounded-md text-sm bg-green-500/10">
                       <p className="font-medium">Age: {patient_age} years</p>
                     </div>
 
@@ -213,12 +221,15 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
               </div>
             </div>
           </div>
-
+          {/* Parte de los cuadrantes "rojos" */}
           <div>
-            <h3 className="text-sm font-medium mb-2">Lung Infection Map</h3>
+            <h3 className="text-lg text-center font-medium mb-2">
+              Lung Infection Map
+            </h3>
             <div className="grid grid-cols-2 gap-4">
+              {/* cuadritos del lado izquierdo */}
               <div>
-                <h5 className="text-xs font-medium mb-2 text-center">
+                <h5 className="text-sm font-medium mb-2 text-center">
                   Left Lung
                 </h5>
                 <div className="aspect-square relative border rounded-md overflow-hidden">
@@ -274,9 +285,9 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                   </div>
                 </div>
               </div>
-
+              {/* Cuadritos del lado derecho */}
               <div>
-                <h5 className="text-xs font-medium mb-2 text-center">
+                <h5 className="text-sm font-medium mb-2 text-center">
                   Right Lung
                 </h5>
                 <div className="aspect-square relative border rounded-md overflow-hidden">
@@ -337,14 +348,69 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
               Infection ratio by lung quadrant (lt: top-left, rt: top-right, lb:
               bottom-left, rb: bottom-right)
             </div>
+            {/*++ AQUÍ ++ la imagen procesada, //* cuando sean ya la X-Ray y el ECG se debería remover */}
+            <div className="mt-6 ">
+              <h3 className="text-base text-center font-medium mb-2">
+                Processed X-Ray Image
+              </h3>
+              <div className="border rounded-lg overflow-hidden">
+                {/* imagen rx procesada */}
+                {data.processedImageUrl ? (
+                  <div className="relative w-full h-64 md:h-80">
+                    <Image
+                      src={data.processedImageUrl}
+                      alt="Processed X-Ray"
+                      fill
+                      className="object-contain"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      priority
+                      onError={(e) => {
+                        console.error("Error loading processed image");
+                        // Mostrar mensaje de error en la UI
+                        const target = e.target as HTMLImageElement;
+                        if (target.parentElement) {
+                          target.style.display = "none";
+                          const errorDiv = document.createElement("div");
+                          errorDiv.className =
+                            "p-4 text-center text-muted-foreground flex items-center justify-center gap-2";
+                          errorDiv.innerHTML = `
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        <span>Error loading processed image</span>
+                      `;
+                          target.parentElement.appendChild(errorDiv);
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-muted-foreground flex items-center justify-center gap-2">
+                    <ImageOff className="h-4 w-4" />
+                    <span>Processing image...</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="mt-6">
-          <h3 className="text-sm font-medium mb-2">Processed X-Ray Image</h3>
-          <div className="border rounded-lg overflow-hidden">
+        {/* Parte donde muestra el ECG y la imagen ya procesados */}
+        {/* <div className="mt-6 ">
+          <h3 className="text-base text-center font-medium mb-2">
+            Processed X-Ray Image
+          </h3>
+          <div className="border rounded-lg overflow-hidden flex justify-evenly">
+            aquí irá el ECG ya procesado
+            {
+              <div className="relative w-[600px] aspect-video text-center hidden justify-center items-center">
+                Here will be the ECG Processed
+              </div>
+            }
+
+            imagen rx procesada
             {data.processedImageUrl ? (
-              <div className="relative w-full aspect-video">
+              <div className="relative w-[50%] aspect-video ml-auto">
                 <Image
                   src={data.processedImageUrl}
                   alt="Processed X-Ray"
@@ -357,14 +423,15 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                     // Mostrar mensaje de error en la UI
                     const target = e.target as HTMLImageElement;
                     if (target.parentElement) {
-                      target.style.display = 'none';
-                      const errorDiv = document.createElement('div');
-                      errorDiv.className = 'p-4 text-center text-muted-foreground flex items-center justify-center gap-2';
+                      target.style.display = "none";
+                      const errorDiv = document.createElement("div");
+                      errorDiv.className =
+                        "p-4 text-center text-muted-foreground flex items-center justify-center gap-2";
                       errorDiv.innerHTML = `
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                           <path d="M6 18L18 6M6 6l12 12"/>
                         </svg>
-                        <span>Error al cargar la imagen procesada</span>
+                        <span>Error loading processed image</span>
                       `;
                       target.parentElement.appendChild(errorDiv);
                     }
@@ -378,7 +445,7 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );

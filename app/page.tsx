@@ -9,7 +9,7 @@ import { services } from '@/components/services-config';
 
 export default function HomePage() {
   const [status, setStatus] = useState<Record<string, string>>(
-    Object.fromEntries(services.map(({ name }) => [name, 'Cargando...']))
+    Object.fromEntries(services.map(({ name }) => [name, 'Loading...']))
   );
 
   const checkServices = async () => {
@@ -20,9 +20,9 @@ export default function HomePage() {
         try {
           const res = await fetch(url, { method: 'GET', cache: 'no-store' });
           if (name === 'XRay') {
-            updates[name] = (res.ok || res.status === 404) ? 'Activo' : 'Cargando...';
+            updates[name] = (res.ok || res.status === 404) ? 'Active' : 'Loading...';
           } else {
-            updates[name] = res.ok ? 'Activo' : 'Cargando...';
+            updates[name] = res.ok ? 'Active' : 'Loading...';
           }
         } catch {
           updates[name] = 'Error';
@@ -66,7 +66,7 @@ export default function HomePage() {
 
         {/* Mostrar "Cargando..." mientras aún no está listo el status */}
         {status === null ? (
-          <p className="mt-2 text-muted-foreground">Cargando servicios...</p>
+          <p className="mt-2 text-muted-foreground">Loading servicies...</p>
         ) : (
           <CurieUploadInterface status={status} />
         )}
