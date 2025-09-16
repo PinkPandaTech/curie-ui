@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { services } from "@/components/services-config";
+import Image from "next/image";
 
 const ServiceStatus = ({ status }: { status: Record<string, string> }) => {
   return (
@@ -26,7 +27,14 @@ const ServiceStatus = ({ status }: { status: Record<string, string> }) => {
           </Card>
         ))}
       </div>
-      {/* <div className='bg-white'>fdgfdhg</div> */}
+      <div className="ml-auto mr-auto self-center">
+        <Image
+          src="/humath-health.png"
+          width={200}
+          height={200}
+          alt="Logo Humath health"
+        />
+      </div>
     </div>
   );
 };
