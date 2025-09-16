@@ -220,6 +220,36 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                 )}
               </div>
             </div>
+            {/* Nueva sección: Imagen + 6 tarjetas semáforo */}
+            <div className="flex flex-row gap-8 mt-8 items-center justify-center">
+              {/* Imagen de ejemplo */}
+              <div className=" flex items-center justify-center border rounded-md bg-muted">
+                <Image
+                  src="/MarieCurie.png"
+                  alt="Marie Curie Image"
+                  width={200}
+                  height={200}
+                  className="object-contain"
+                />
+              </div>
+              {/* Tarjetas semáforo */}
+              <div className="flex items-center flex-col gap-4">
+                <h3 className="text-center text-xl ">Confidence percentage</h3>
+
+                {/* Tarjeta Verde */}
+                <div className="w-32 h-12 flex items-center justify-center rounded-md bg-green-500 text-white font-bold text-lg shadow">
+                  60%
+                </div>
+                {/* Tarjeta Amarilla */}
+                <div className="w-32 h-12 flex items-center justify-center rounded-md bg-yellow-400 text-black font-bold text-lg shadow">
+                  30%
+                </div>
+                {/* Tarjeta Roja */}
+                <div className="w-32 h-12 flex items-center justify-center rounded-md bg-red-500 text-white font-bold text-lg shadow">
+                  10%
+                </div>
+              </div>
+            </div>
           </div>
           {/* Parte de los cuadrantes "rojos" */}
           <div>
