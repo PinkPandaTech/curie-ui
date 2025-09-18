@@ -10,6 +10,23 @@ import { AlertCircle, CheckCircle, ImageOff } from "lucide-react";
 import Image from "next/image";
 import { div } from "framer-motion/client";
 
+// Traffic Light System Types
+type TrafficLightColor = 'green' | 'yellow' | 'red' | 'indeterminate';
+
+interface TrafficLightState {
+  color: TrafficLightColor;
+  percentage: number;
+  confidence: number;
+  reason: string;
+}
+
+interface TrafficLightData {
+  green: TrafficLightState;
+  yellow: TrafficLightState;
+  red: TrafficLightState;
+  primary: TrafficLightColor;
+}
+
 interface LungInfectionData {
   total_ratio?: number;
   right_ratio?: {
@@ -33,8 +50,242 @@ interface LungInfectionData {
   processedImageUrl?: string; // URL de la imagen procesada
 }
 
+interface TrafficLightResult {
+  primaryColor: 'green' | 'yellow' | 'red';
+  confidence: {
+    green: number;
+    yellow: number;
+    red: number;
+  };
+  reasoning: string;
+}
+
 interface LungInfectionResultsProps {
   data: LungInfectionData;
+}
+
+// Traffic Light Evaluation Functions
+function evaluateGreenCondition(pleth_status?: string, label?: string, idsa_ats_score?: number): boolean {
+  return pleth_status === "Normal" &&
+         label === "SANO" &&
+         (idsa_ats_score !== undefined && idsa_ats_score <= 2);
+}
+
+function evaluateYellowCondition(pleth_status?: string, label?: string, idsa_ats_score?: number): boolean {
+  return (pleth_status === "Normal" || pleth_status === "Bradicardia") &&
+         label === "OTROS" &&
+         (idsa_ats_score !== undefined && idsa_ats_score >= 3);
+}
+
+function evaluateRedCondition(pleth_status?: string, label?: string, idsa_ats_score?: number): boolean {
+  return (pleth_status === "Taquicardia" || pleth_status === "Bradicardia") &&
+         label === "NEUMONIA" &&
+         (idsa_ats_score !== undefined && idsa_ats_score >= 8);
+}
+
+// Funciones auxiliares para determinar colores basados en valores y categorías
+function getScoreBasedColor(score?: number): string {
+  if (score === undefined || score === null) return "bg-gray-500/10";
+  if (score <= 2) return "bg-green-500/10";
+  if (score >= 3 && score < 8) return "bg-yellow-500/10";
+  return "bg-red-500/10"; // score >= 8
+}
+
+function getLabelBasedColor(label?: string): string {
+  if (!label) return "bg-gray-500/10";
+  switch (label) {
+    case "SANO":
+      return "bg-green-500/10";
+    case "OTROS":
+      return "bg-yellow-500/10";
+    case "NEUMONIA":
+      return "bg-red-500/10";
+    default:
+      return "bg-gray-500/10";
+  }
+}
+
+function getPlethStatusBasedColor(plethStatus?: string): string {
+  if (!plethStatus) return "bg-gray-500/10";
+  switch (plethStatus) {
+    case "Normal":
+      return "bg-green-500/10";
+    case "Bradicardia":
+      return "bg-yellow-500/10";
+    case "Taquicardia":
+      return "bg-red-500/10";
+    default:
+      return "bg-gray-500/10";
+  }
+}
+
+function calculateProximityState(data: LungInfectionData): TrafficLightData {
+  // Lógica de proximidad cuando no hay coincidencia exacta
+  const { pleth_status, label, idsa_ats_score } = data;
+  let green = 20, yellow = 20, red = 20; // Base mínima
+  let reasoning = "";
+
+  // Evaluación por etiqueta de imagen (peso: 40%)
+  // if (label === "NEUMONIA") {
+  //   red += 40;
+  //   reasoning += "Imagen indica NEUMONIA (+40% rojo), ";
+  // } else if (label === "OTROS") {
+  //   yellow += 35;
+  //   reasoning += "Imagen indica OTROS (+35% amarillo), ";
+  // } else if (label === "SANO") {
+  //   green += 35;
+  //   reasoning += "Imagen indica SANO (+35% verde), ";
+  // }
+
+  // Evaluación por IDSA ATS Score (peso: 30%)
+  // const score = idsa_ats_score || 0;
+  // if (score >= 8) {
+  //   red += 30;
+  //   reasoning += `IDSA=${score} (crítico, +30% rojo), `;
+  // } else if (score >= 3) {
+  //   yellow += 25;
+  //   reasoning += `IDSA=${score} (moderado, +25% amarillo), `;
+  // } else {
+  //   green += 25;
+  //   reasoning += `IDSA=${score} (bajo, +25% verde), `;
+  // }
+
+  // Evaluación por PLETH Status (peso: 30%)
+  // if (pleth_status === "Taquicardia") {
+  //   red += 25;
+  //   reasoning += "PLETH=Taquicardia (+25% rojo)";
+  // } else if (pleth_status === "Bradicardia") {
+  //   red += 15;
+  //   yellow += 15;
+  //   reasoning += "PLETH=Bradicardia (+15% rojo, +15% amarillo)";
+  // } else if (pleth_status === "Normal") {
+  //   green += 20;
+  //   reasoning += "PLETH=Normal (+20% verde)";
+  // }
+
+  // Normalizar para que sumen 100%
+  const total = green + yellow + red;
+  const greenPercentage = Math.round((green / total) * 100);
+  const yellowPercentage = Math.round((yellow / total) * 100);
+  const redPercentage = 100 - greenPercentage - yellowPercentage; // Asegurar que sume 100%
+
+  // Determinar color primario
+  const primaryColor =
+    redPercentage >= yellowPercentage && redPercentage >= greenPercentage ? 'red' :
+    yellowPercentage >= greenPercentage ? 'yellow' : 'green';
+
+  return {
+    green: {
+      color: 'green',
+      percentage: greenPercentage,
+      confidence: Math.max(20, greenPercentage),
+      reason: reasoning
+    },
+    yellow: {
+      color: 'yellow',
+      percentage: yellowPercentage,
+      confidence: Math.max(20, yellowPercentage),
+      reason: reasoning
+    },
+    red: {
+      color: 'red',
+      percentage: redPercentage,
+      confidence: Math.max(20, redPercentage),
+      reason: reasoning
+    },
+    primary: primaryColor
+  };
+}
+
+function evaluateTrafficLight(data: LungInfectionData): TrafficLightData {
+  const { pleth_status, label, idsa_ats_score, confidence } = data;
+  
+  // Si faltan datos, usar lógica de proximidad con los datos disponibles
+  if (!pleth_status || !label || idsa_ats_score === undefined) {
+    return calculateProximityState(data);
+  }
+  
+  const isGreen = evaluateGreenCondition(pleth_status, label, idsa_ats_score);
+  const isYellow = evaluateYellowCondition(pleth_status, label, idsa_ats_score);
+  const isRed = evaluateRedCondition(pleth_status, label, idsa_ats_score);
+  
+  const baseConfidence = confidence || 70;
+  
+  // Si coincide exactamente con una regla
+  if (isRed) {
+    return {
+      green: {
+        color: 'green',
+        percentage: 5,
+        confidence: Math.max(5, baseConfidence - 50),
+        reason: 'Coincidencia exacta con criterios ROJOS'
+      },
+      yellow: {
+        color: 'yellow',
+        percentage: 15,
+        confidence: Math.max(10, baseConfidence - 40),
+        reason: 'Coincidencia exacta con criterios ROJOS'
+      },
+      red: {
+        color: 'red',
+        percentage: 80,
+        confidence: Math.min(95, baseConfidence + 15),
+        reason: 'Condiciones críticas: PLETH anormal + NEUMONIA + IDSA≥8'
+      },
+      primary: 'red'
+    };
+  }
+  
+  if (isYellow) {
+    return {
+      green: {
+        color: 'green',
+        percentage: 15,
+        confidence: Math.max(10, baseConfidence - 40),
+        reason: 'Coincidencia exacta con criterios AMARILLOS'
+      },
+      yellow: {
+        color: 'yellow',
+        percentage: 75,
+        confidence: Math.min(90, baseConfidence + 10),
+        reason: 'Condiciones intermedias: PLETH normal/bradicardia + OTROS + IDSA≥3'
+      },
+      red: {
+        color: 'red',
+        percentage: 10,
+        confidence: Math.max(15, baseConfidence - 30),
+        reason: 'Coincidencia exacta con criterios AMARILLOS'
+      },
+      primary: 'yellow'
+    };
+  }
+  
+  if (isGreen) {
+    return {
+      green: {
+        color: 'green',
+        percentage: 85,
+        confidence: Math.min(95, baseConfidence + 15),
+        reason: 'Condiciones óptimas: PLETH normal + SANO + IDSA≤2'
+      },
+      yellow: {
+        color: 'yellow',
+        percentage: 10,
+        confidence: Math.max(10, baseConfidence - 40),
+        reason: 'Coincidencia exacta con criterios VERDES'
+      },
+      red: {
+        color: 'red',
+        percentage: 5,
+        confidence: Math.max(5, baseConfidence - 50),
+        reason: 'Coincidencia exacta con criterios VERDES'
+      },
+      primary: 'green'
+    };
+  }
+  
+  // Si no coincide con ninguna regla exacta, usar lógica de proximidad
+  return calculateProximityState(data);
 }
 
 export function LungInfectionResults({ data }: LungInfectionResultsProps) {
@@ -53,6 +304,9 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
   // Determine status based on label
   const isHealthy = label === "SANO";
   const isPneumonia = label === "NEUMONIA";
+  
+  // Evaluate traffic light system
+  const trafficLightData = evaluateTrafficLight(data);
 
   return (
     <Card className="shadow-lg border-t-4 border-t-primary">
@@ -64,11 +318,13 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
           </div>
           <Badge
             variant={isHealthy ? "outline" : "destructive"}
-            className={
-              isHealthy
-                ? "bg-green-500/10 text-green-500 border-green-500/20 text-base"
-                : "text-base "
-            }
+            className={`text-base ${
+              label === "SANO"
+                ? "bg-green-500/10 text-green-500 border-green-500/20"
+                : label === "NEUMONIA"
+                ? "bg-red-500/10 text-red-500 border-red-500/20"
+                : "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"
+            }`}
           >
             {isHealthy ? (
               <>
@@ -138,16 +394,10 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
               {/* Diagnostico */}
               <div>
                 <h4 className="text-sm text-muted-foreground mb-1">
-                  Diagnosis
+                  Clasification
                 </h4>
                 <div
-                  className={`p-3 rounded-md text-sm ${
-                    label === "SANO"
-                      ? "bg-green-500/10"
-                      : label === "NEUMONIA"
-                      ? "bg-destructive/10"
-                      : "bg-yellow-500/10"
-                  }`}
+                  className={`p-3 rounded-md text-sm ${getLabelBasedColor(label)}`}
                 >
                   <p className="font-medium">
                     {label === "SANO"
@@ -164,13 +414,7 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                       ECG Diagnosis
                     </h4>
                     <div
-                      className={`p-3 rounded-md text-sm ${
-                        label === "SANO"
-                          ? "bg-green-500/10"
-                          : label === "NEUMONIA"
-                          ? "bg-destructive/10"
-                          : "bg-yellow-500/10"
-                      }`}
+                      className={`p-3 rounded-md text-sm ${getPlethStatusBasedColor(pleth_status)}`}
                     >
                       <p className="font-medium">
                         {pleth_status ||
@@ -195,7 +439,7 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                       <p className="font-medium">Age: {patient_age} years</p>
                     </div>
 
-                    <div className="p-3 rounded-md text-sm bg-purple-500/10 mt-2">
+                    <div className={`p-3 rounded-md text-sm mt-2 ${getScoreBasedColor(idsa_ats_score)}`}>
                       <p className="font-medium">
                         IDSA ATS Score: {idsa_ats_score}
                       </p>
@@ -220,7 +464,7 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                 )}
               </div>
             </div>
-            {/* Nueva sección: Imagen + 6 tarjetas semáforo */}
+            {/* Nueva sección: Imagen + 3 tarjetas semáforo */}
             <div className="flex flex-row gap-8 mt-8 items-center justify-center">
               {/* Imagen de ejemplo */}
               <div className=" flex items-center justify-center border rounded-md bg-muted">
@@ -235,18 +479,65 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
               {/* Tarjetas semáforo */}
               <div className="flex items-center flex-col gap-4">
                 <h3 className="text-center text-xl ">Confidence percentage</h3>
+                
+                {/* Mostrar estado de datos */}
+                {(!pleth_status || !label || idsa_ats_score === undefined) && (
+                  <div className="text-sm text-orange-600 text-center mb-2 font-medium">
+                    Evaluación parcial:
+                    <div className="text-xs text-muted-foreground">
+                      {!pleth_status && "• ECG data missing "}
+                      {!label && "• Image analysis missing "}
+                      {idsa_ats_score === undefined && "• Medical history missing"}
+                    </div>
+                  </div>
+                )}
 
                 {/* Tarjeta Verde */}
-                <div className="w-32 h-12 flex items-center justify-center rounded-md bg-green-500 text-white font-bold text-lg shadow">
-                  60%
+                <div
+                  className={`w-32 h-12 flex items-center justify-center rounded-md text-white font-bold text-lg shadow transition-all ${
+                    trafficLightData.primary === 'green'
+                      ? 'bg-green-500 ring-2 ring-green-300'
+                      : 'bg-green-400'
+                  }`}
+                  title={trafficLightData.green.reason}
+                >
+                  {trafficLightData.green.percentage}%
                 </div>
+                
                 {/* Tarjeta Amarilla */}
-                <div className="w-32 h-12 flex items-center justify-center rounded-md bg-yellow-400 text-black font-bold text-lg shadow">
-                  30%
+                <div
+                  className={`w-32 h-12 flex items-center justify-center rounded-md text-black font-bold text-lg shadow transition-all ${
+                    trafficLightData.primary === 'yellow'
+                      ? 'bg-yellow-400 ring-2 ring-yellow-300'
+                      : 'bg-yellow-300'
+                  }`}
+                  title={trafficLightData.yellow.reason}
+                >
+                  {trafficLightData.yellow.percentage}%
                 </div>
+                
                 {/* Tarjeta Roja */}
-                <div className="w-32 h-12 flex items-center justify-center rounded-md bg-red-500 text-white font-bold text-lg shadow">
-                  10%
+                <div
+                  className={`w-32 h-12 flex items-center justify-center rounded-md text-white font-bold text-lg shadow transition-all ${
+                    trafficLightData.primary === 'red'
+                      ? 'bg-red-500 ring-2 ring-red-300'
+                      : 'bg-red-400'
+                  }`}
+                  title={trafficLightData.red.reason}
+                >
+                  {trafficLightData.red.percentage}%
+                </div>
+                
+                {/* Indicador de estado primario */}
+                {/* <div className="text-xs text-center text-muted-foreground mt-2">
+                  Primary Status: {trafficLightData.primary.toUpperCase()}
+                </div> */}
+                
+                {/* Mostrar razón del resultado */}
+                <div className="text-xs text-center text-muted-foreground mt-1 max-w-48">
+                  {trafficLightData.primary === 'green' ? trafficLightData.green.reason :
+                   trafficLightData.primary === 'yellow' ? trafficLightData.yellow.reason :
+                   trafficLightData.red.reason}
                 </div>
               </div>
             </div>
