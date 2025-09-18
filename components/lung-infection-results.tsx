@@ -54,6 +54,14 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
   const isHealthy = label === "SANO";
   const isPneumonia = label === "NEUMONIA";
 
+  function getRedTone(value: number): string {
+    if (value >= 75) return "rgba(220,38,38,1)";      // rojo intenso
+    if (value >= 50) return "rgba(220,38,38,0.75)";   // rojo medio
+    if (value >= 25) return "rgba(220,38,38,0.5)";    // rojo claro
+    if (value > 0) return "rgba(220,38,38,0.25)";   // rojo muy tenue
+    return "transparent";
+  }
+
   return (
     <Card className="shadow-lg border-t-4 border-t-primary">
       <CardHeader>
@@ -105,13 +113,12 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                 {/* Barra roja */}
                 <div className="w-full bg-muted rounded-full h-4">
                   <div
-                    className={`h-4 rounded-full ${
-                      total_ratio || 0 > 15
-                        ? "bg-destructive"
-                        : total_ratio || 0 > 5
+                    className={`h-4 rounded-full ${total_ratio || 0 > 15
+                      ? "bg-destructive"
+                      : total_ratio || 0 > 5
                         ? "bg-yellow-500"
                         : "bg-green-500"
-                    }`}
+                      }`}
                     style={{ width: `${Math.min(total_ratio || 0, 100)}%` }}
                   ></div>
                 </div>
@@ -141,20 +148,19 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                   Diagnosis
                 </h4>
                 <div
-                  className={`p-3 rounded-md text-sm ${
-                    label === "SANO"
-                      ? "bg-green-500/10"
-                      : label === "NEUMONIA"
+                  className={`p-3 rounded-md text-sm ${label === "SANO"
+                    ? "bg-green-500/10"
+                    : label === "NEUMONIA"
                       ? "bg-destructive/10"
                       : "bg-yellow-500/10"
-                  }`}
+                    }`}
                 >
                   <p className="font-medium">
                     {label === "SANO"
                       ? "Healthy"
                       : label === "NEUMONIA"
-                      ? "Pneumonia"
-                      : "Other Condition"}
+                        ? "Pneumonia"
+                        : "Other Condition"}
                   </p>
                 </div>
                 {/* Diagnostico ECG */}
@@ -164,21 +170,20 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                       ECG Diagnosis
                     </h4>
                     <div
-                      className={`p-3 rounded-md text-sm ${
-                        label === "SANO"
-                          ? "bg-green-500/10"
-                          : label === "NEUMONIA"
+                      className={`p-3 rounded-md text-sm ${label === "Normal"
+                        ? "bg-green-500/10"
+                        : label === "NEUMONIA"
                           ? "bg-destructive/10"
                           : "bg-yellow-500/10"
-                      }`}
+                        }`}
                     >
                       <p className="font-medium">
                         {pleth_status ||
                           (label === "SANO"
                             ? "Healthy"
                             : label === "NEUMONIA"
-                            ? "Pneumonia"
-                            : "Other Condition")}
+                              ? "Pneumonia"
+                              : "Other Condition")}
                       </p>
                     </div>
                   </>
@@ -260,56 +265,40 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
               {/* cuadritos del lado izquierdo */}
               <div>
                 <h5 className="text-sm font-medium mb-2 text-center">
-                  Left Lung
+                  Right Lung
                 </h5>
                 <div className="aspect-square relative border rounded-md overflow-hidden">
                   <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
                     <div
                       className="border-r border-b"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (left_ratio?.lt ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(right_ratio?.rt ?? 0) }}
                     >
                       <span className="absolute top-1/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
-                        {left_ratio?.lt ?? 0}%
+                        {right_ratio?.rt ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-l border-b"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (left_ratio?.rt ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(right_ratio?.lt ?? 0) }}
                     >
                       <span className="absolute top-1/4 right-1/4 transform translate-x-1/2 -translate-y-1/2 text-xs font-bold">
-                        {left_ratio?.rt ?? 0}%
+                        {right_ratio?.lt ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-r border-t"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (left_ratio?.lb ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(right_ratio?.rb ?? 0) }}
                     >
                       <span className="absolute bottom-1/4 left-1/4 transform -translate-x-1/2 translate-y-1/2 text-xs font-bold">
-                        {left_ratio?.lb ?? 0}%
+                        {right_ratio?.rb ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-l border-t"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (left_ratio?.rb ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(right_ratio?.lb ?? 0) }}
                     >
                       <span className="absolute bottom-1/4 right-1/4 transform translate-x-1/2 translate-y-1/2 text-xs font-bold">
-                        {left_ratio?.rb ?? 0}%
+                        {right_ratio?.lb ?? 0}%
                       </span>
                     </div>
                   </div>
@@ -318,56 +307,40 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
               {/* Cuadritos del lado derecho */}
               <div>
                 <h5 className="text-sm font-medium mb-2 text-center">
-                  Right Lung
+                  Left Lung
                 </h5>
                 <div className="aspect-square relative border rounded-md overflow-hidden">
                   <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
                     <div
                       className="border-r border-b"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (right_ratio?.lt ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(left_ratio?.rt ?? 0) }}
                     >
                       <span className="absolute top-1/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
-                        {right_ratio?.lt ?? 0}%
+                        {left_ratio?.rt ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-l border-b"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (right_ratio?.rt ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(left_ratio?.lt ?? 0) }}
                     >
                       <span className="absolute top-1/4 right-1/4 transform translate-x-1/2 -translate-y-1/2 text-xs font-bold">
-                        {right_ratio?.rt ?? 0}%
+                        {left_ratio?.lt ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-r border-t"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (right_ratio?.lb ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(left_ratio?.rb ?? 0) }}
                     >
                       <span className="absolute bottom-1/4 left-1/4 transform -translate-x-1/2 translate-y-1/2 text-xs font-bold">
-                        {right_ratio?.lb ?? 0}%
+                        {left_ratio?.rb ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-l border-t"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (right_ratio?.rb ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(left_ratio?.lb ?? 0) }}
                     >
                       <span className="absolute bottom-1/4 right-1/4 transform translate-x-1/2 translate-y-1/2 text-xs font-bold">
-                        {right_ratio?.rb ?? 0}%
+                        {left_ratio?.lb ?? 0}%
                       </span>
                     </div>
                   </div>
