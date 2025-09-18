@@ -67,20 +67,20 @@ interface LungInfectionResultsProps {
 // Traffic Light Evaluation Functions
 function evaluateGreenCondition(pleth_status?: string, label?: string, idsa_ats_score?: number): boolean {
   return pleth_status === "Normal" &&
-         label === "SANO" &&
-         (idsa_ats_score !== undefined && idsa_ats_score <= 2);
+    label === "SANO" &&
+    (idsa_ats_score !== undefined && idsa_ats_score <= 2);
 }
 
 function evaluateYellowCondition(pleth_status?: string, label?: string, idsa_ats_score?: number): boolean {
   return (pleth_status === "Normal" || pleth_status === "Bradicardia") &&
-         label === "OTROS" &&
-         (idsa_ats_score !== undefined && idsa_ats_score >= 3);
+    label === "OTROS" &&
+    (idsa_ats_score !== undefined && idsa_ats_score >= 3);
 }
 
 function evaluateRedCondition(pleth_status?: string, label?: string, idsa_ats_score?: number): boolean {
   return (pleth_status === "Taquicardia" || pleth_status === "Bradicardia") &&
-         label === "NEUMONIA" &&
-         (idsa_ats_score !== undefined && idsa_ats_score >= 8);
+    label === "NEUMONIA" &&
+    (idsa_ats_score !== undefined && idsa_ats_score >= 8);
 }
 
 // Funciones auxiliares para determinar colores basados en valores y categorías
@@ -172,7 +172,7 @@ function calculateProximityState(data: LungInfectionData): TrafficLightData {
   // Determinar color primario
   const primaryColor =
     redPercentage >= yellowPercentage && redPercentage >= greenPercentage ? 'red' :
-    yellowPercentage >= greenPercentage ? 'yellow' : 'green';
+      yellowPercentage >= greenPercentage ? 'yellow' : 'green';
 
   return {
     green: {
@@ -199,18 +199,18 @@ function calculateProximityState(data: LungInfectionData): TrafficLightData {
 
 function evaluateTrafficLight(data: LungInfectionData): TrafficLightData {
   const { pleth_status, label, idsa_ats_score, confidence } = data;
-  
+
   // Si faltan datos, usar lógica de proximidad con los datos disponibles
   if (!pleth_status || !label || idsa_ats_score === undefined) {
     return calculateProximityState(data);
   }
-  
+
   const isGreen = evaluateGreenCondition(pleth_status, label, idsa_ats_score);
   const isYellow = evaluateYellowCondition(pleth_status, label, idsa_ats_score);
   const isRed = evaluateRedCondition(pleth_status, label, idsa_ats_score);
-  
+
   const baseConfidence = confidence || 70;
-  
+
   // Si coincide exactamente con una regla
   if (isRed) {
     return {
@@ -235,7 +235,7 @@ function evaluateTrafficLight(data: LungInfectionData): TrafficLightData {
       primary: 'red'
     };
   }
-  
+
   if (isYellow) {
     return {
       green: {
@@ -259,7 +259,7 @@ function evaluateTrafficLight(data: LungInfectionData): TrafficLightData {
       primary: 'yellow'
     };
   }
-  
+
   if (isGreen) {
     return {
       green: {
@@ -283,7 +283,7 @@ function evaluateTrafficLight(data: LungInfectionData): TrafficLightData {
       primary: 'green'
     };
   }
-  
+
   // Si no coincide con ninguna regla exacta, usar lógica de proximidad
   return calculateProximityState(data);
 }
@@ -304,7 +304,15 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
   // Determine status based on label
   const isHealthy = label === "SANO";
   const isPneumonia = label === "NEUMONIA";
-  
+
+  function getRedTone(value: number): string {
+    if (value >= 75) return "rgba(220,38,38,1)";      // rojo intenso
+    if (value >= 50) return "rgba(220,38,38,0.75)";   // rojo medio
+    if (value >= 25) return "rgba(220,38,38,0.5)";    // rojo claro
+    if (value > 0) return "rgba(220,38,38,0.25)";   // rojo muy tenue
+    return "transparent";
+  }
+
   // Evaluate traffic light system
   const trafficLightData = evaluateTrafficLight(data);
 
@@ -318,13 +326,12 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
           </div>
           <Badge
             variant={isHealthy ? "outline" : "destructive"}
-            className={`text-base ${
-              label === "SANO"
+            className={`text-base ${label === "SANO"
                 ? "bg-green-500/10 text-green-500 border-green-500/20"
                 : label === "NEUMONIA"
-                ? "bg-red-500/10 text-red-500 border-red-500/20"
-                : "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"
-            }`}
+                  ? "bg-red-500/10 text-red-500 border-red-500/20"
+                  : "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"
+              }`}
           >
             {isHealthy ? (
               <>
@@ -361,13 +368,12 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                 {/* Barra roja */}
                 <div className="w-full bg-muted rounded-full h-4">
                   <div
-                    className={`h-4 rounded-full ${
-                      total_ratio || 0 > 15
-                        ? "bg-destructive"
-                        : total_ratio || 0 > 5
+                    className={`h-4 rounded-full ${total_ratio || 0 > 15
+                      ? "bg-destructive"
+                      : total_ratio || 0 > 5
                         ? "bg-yellow-500"
                         : "bg-green-500"
-                    }`}
+                      }`}
                     style={{ width: `${Math.min(total_ratio || 0, 100)}%` }}
                   ></div>
                 </div>
@@ -403,8 +409,8 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                     {label === "SANO"
                       ? "Healthy"
                       : label === "NEUMONIA"
-                      ? "Pneumonia"
-                      : "Other Condition"}
+                        ? "Pneumonia"
+                        : "Other Condition"}
                   </p>
                 </div>
                 {/* Diagnostico ECG */}
@@ -421,8 +427,8 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
                           (label === "SANO"
                             ? "Healthy"
                             : label === "NEUMONIA"
-                            ? "Pneumonia"
-                            : "Other Condition")}
+                              ? "Pneumonia"
+                              : "Other Condition")}
                       </p>
                     </div>
                   </>
@@ -479,7 +485,7 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
               {/* Tarjetas semáforo */}
               <div className="flex items-center flex-col gap-4">
                 <h3 className="text-center text-xl ">Confidence percentage</h3>
-                
+
                 {/* Mostrar estado de datos */}
                 {(!pleth_status || !label || idsa_ats_score === undefined) && (
                   <div className="text-sm text-orange-600 text-center mb-2 font-medium">
@@ -494,50 +500,47 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
 
                 {/* Tarjeta Verde */}
                 <div
-                  className={`w-32 h-12 flex items-center justify-center rounded-md text-white font-bold text-lg shadow transition-all ${
-                    trafficLightData.primary === 'green'
+                  className={`w-32 h-12 flex items-center justify-center rounded-md text-white font-bold text-lg shadow transition-all ${trafficLightData.primary === 'green'
                       ? 'bg-green-500 ring-2 ring-green-300'
                       : 'bg-green-400'
-                  }`}
+                    }`}
                   title={trafficLightData.green.reason}
                 >
                   {trafficLightData.green.percentage}%
                 </div>
-                
+
                 {/* Tarjeta Amarilla */}
                 <div
-                  className={`w-32 h-12 flex items-center justify-center rounded-md text-black font-bold text-lg shadow transition-all ${
-                    trafficLightData.primary === 'yellow'
+                  className={`w-32 h-12 flex items-center justify-center rounded-md text-black font-bold text-lg shadow transition-all ${trafficLightData.primary === 'yellow'
                       ? 'bg-yellow-400 ring-2 ring-yellow-300'
                       : 'bg-yellow-300'
-                  }`}
+                    }`}
                   title={trafficLightData.yellow.reason}
                 >
                   {trafficLightData.yellow.percentage}%
                 </div>
-                
+
                 {/* Tarjeta Roja */}
                 <div
-                  className={`w-32 h-12 flex items-center justify-center rounded-md text-white font-bold text-lg shadow transition-all ${
-                    trafficLightData.primary === 'red'
+                  className={`w-32 h-12 flex items-center justify-center rounded-md text-white font-bold text-lg shadow transition-all ${trafficLightData.primary === 'red'
                       ? 'bg-red-500 ring-2 ring-red-300'
                       : 'bg-red-400'
-                  }`}
+                    }`}
                   title={trafficLightData.red.reason}
                 >
                   {trafficLightData.red.percentage}%
                 </div>
-                
+
                 {/* Indicador de estado primario */}
                 {/* <div className="text-xs text-center text-muted-foreground mt-2">
                   Primary Status: {trafficLightData.primary.toUpperCase()}
                 </div> */}
-                
+
                 {/* Mostrar razón del resultado */}
                 <div className="text-xs text-center text-muted-foreground mt-1 max-w-48">
                   {trafficLightData.primary === 'green' ? trafficLightData.green.reason :
-                   trafficLightData.primary === 'yellow' ? trafficLightData.yellow.reason :
-                   trafficLightData.red.reason}
+                    trafficLightData.primary === 'yellow' ? trafficLightData.yellow.reason :
+                      trafficLightData.red.reason}
                 </div>
               </div>
             </div>
@@ -551,56 +554,40 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
               {/* cuadritos del lado izquierdo */}
               <div>
                 <h5 className="text-sm font-medium mb-2 text-center">
-                  Left Lung
+                  Right Lung
                 </h5>
                 <div className="aspect-square relative border rounded-md overflow-hidden">
                   <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
                     <div
                       className="border-r border-b"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (left_ratio?.lt ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(right_ratio?.rt ?? 0) }}
                     >
                       <span className="absolute top-1/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
-                        {left_ratio?.lt ?? 0}%
+                        {right_ratio?.rt ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-l border-b"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (left_ratio?.rt ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(right_ratio?.lt ?? 0) }}
                     >
                       <span className="absolute top-1/4 right-1/4 transform translate-x-1/2 -translate-y-1/2 text-xs font-bold">
-                        {left_ratio?.rt ?? 0}%
+                        {right_ratio?.lt ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-r border-t"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (left_ratio?.lb ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(right_ratio?.rb ?? 0) }}
                     >
                       <span className="absolute bottom-1/4 left-1/4 transform -translate-x-1/2 translate-y-1/2 text-xs font-bold">
-                        {left_ratio?.lb ?? 0}%
+                        {right_ratio?.rb ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-l border-t"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (left_ratio?.rb ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(right_ratio?.lb ?? 0) }}
                     >
                       <span className="absolute bottom-1/4 right-1/4 transform translate-x-1/2 translate-y-1/2 text-xs font-bold">
-                        {left_ratio?.rb ?? 0}%
+                        {right_ratio?.lb ?? 0}%
                       </span>
                     </div>
                   </div>
@@ -609,56 +596,40 @@ export function LungInfectionResults({ data }: LungInfectionResultsProps) {
               {/* Cuadritos del lado derecho */}
               <div>
                 <h5 className="text-sm font-medium mb-2 text-center">
-                  Right Lung
+                  Left Lung
                 </h5>
                 <div className="aspect-square relative border rounded-md overflow-hidden">
                   <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
                     <div
                       className="border-r border-b"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (right_ratio?.lt ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(left_ratio?.rt ?? 0) }}
                     >
                       <span className="absolute top-1/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
-                        {right_ratio?.lt ?? 0}%
+                        {left_ratio?.rt ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-l border-b"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (right_ratio?.rt ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(left_ratio?.lt ?? 0) }}
                     >
                       <span className="absolute top-1/4 right-1/4 transform translate-x-1/2 -translate-y-1/2 text-xs font-bold">
-                        {right_ratio?.rt ?? 0}%
+                        {left_ratio?.lt ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-r border-t"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (right_ratio?.lb ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(left_ratio?.rb ?? 0) }}
                     >
                       <span className="absolute bottom-1/4 left-1/4 transform -translate-x-1/2 translate-y-1/2 text-xs font-bold">
-                        {right_ratio?.lb ?? 0}%
+                        {left_ratio?.rb ?? 0}%
                       </span>
                     </div>
                     <div
                       className="border-l border-t"
-                      style={{
-                        background: `rgba(220, 38, 38, ${
-                          (right_ratio?.rb ?? 0 / 100) * 2
-                        })`,
-                      }}
+                      style={{ background: getRedTone(left_ratio?.lb ?? 0) }}
                     >
                       <span className="absolute bottom-1/4 right-1/4 transform translate-x-1/2 translate-y-1/2 text-xs font-bold">
-                        {right_ratio?.rb ?? 0}%
+                        {left_ratio?.lb ?? 0}%
                       </span>
                     </div>
                   </div>
